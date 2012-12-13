@@ -3,6 +3,8 @@ require 'spec_helper'
 describe "Authentication" do
 
   subject { page }
+  it { should_not have_link('Profile') }
+  it { should_not have_link('Settings') }
 
   describe "signin page" do
     before { visit signin_path }
@@ -65,6 +67,21 @@ describe "Authentication" do
             page.should have_selector('title', text: 'Edit user')
           end
         end
+        
+        describe "in the Microposts controller" do
+
+          describe "submitting to the create action" do
+            before { post microposts_path }
+            specify { response.should redirect_to(signin_path) }
+          end
+
+          describe "submitting to the destroy action" do
+            before { delete micropost_path(FactoryGirl.create(:micropost)) }
+            specify { response.should redirect_to(signin_path) }
+          end
+        end  
+        
+        
       end      
 
       describe "in the Users controller" do
@@ -85,6 +102,8 @@ describe "Authentication" do
         end
       end
     end
+    
+    
 
     describe "as wrong user" do
          let(:user) { FactoryGirl.create(:user) }
@@ -95,13 +114,13 @@ describe "Authentication" do
            before { visit edit_user_path(wrong_user) }
            it { should_not have_selector('title', text: full_title('Edit user')) }
          end
-
+    
          describe "submitting a PUT request to the Users#update action" do
            before { put user_path(wrong_user) }
            specify { response.should redirect_to(root_path) }
          end
     end
-
+       
     describe "as non-admin user" do
       let(:user) { FactoryGirl.create(:user) }
       let(:non_admin) { FactoryGirl.create(:user) }
@@ -112,11 +131,19 @@ describe "Authentication" do
         before { delete user_path(user) }
         specify { response.should redirect_to(root_path) }        
       end
-    end    
+      
+      describe "it should redirect a signed-in user to the root page when hitting the create or new actions becaues they don't need to create a new user" do
+      
+      before {post users_path(user)}
+      specify { response.should redirect_to(root_path)}
+      
+      end  
+        
+        
+        
      
-  end
+    end  
 
-
-
+  end  
 
 end
